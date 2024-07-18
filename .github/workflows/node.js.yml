@@ -13,51 +13,51 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '14'
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
 
-    - name: Install dependencies
-      run: npm install
+      - name: Install dependencies
+        run: npm install
 
-    - name: Run tests
-      run: npm test
+      - name: Run tests
+        run: npm test
 
   sonar:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up Docker
-      run: |
-        docker run -d -p 9000:9000 sonarqube:latest
-        sleep 30 # Wait for SonarQube to start
+      - name: Set up Docker
+        run: |
+          docker run -d -p 9000:9000 sonarqube:latest
+          sleep 30 # Wait for SonarQube to start
 
-    - name: Download ngrok
-      run: |
-        curl -s https://ngrok.com/download | bash
-        sudo mv ngrok /usr/local/bin
+      - name: Install ngrok
+        run: |
+          curl -s https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip -o ngrok.zip
+          unzip ngrok.zip
+          sudo mv ngrok /usr/local/bin/ngrok
 
-    - name: Authenticate ngrok (securely using secrets)
-      run: ngrok authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
+      - name: Authenticate ngrok (using secrets)
+        run: ngrok authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
 
-    - name: Start ngrok (background process and log capture)
-      run: |
-        ngrok http 9000 --log=stdout > ngrok.log &
-        sleep 10
+      - name: Start ngrok (background process and log capture)
+        run: |
+          ngrok http 9000 --log=stdout > ngrok.log &
 
-    - name: Wait for ngrok to start
-      run: sleep 10
+      - name: Wait for ngrok to start
+        run: sleep 10
 
-    - name: Get ngrok URL (simplified with error handling)
-      run: |
-        curl -s http://localhost:4040/api/tunnels | jq -r .tunnels[0].public_url > ngrok_url.txt
+      - name: Get ngrok URL
+        run: |
+          curl -s http://localhost:4040/api/tunnels | jq -r .tunnels[0].public_url > ngrok_url.txt
 
-    - name: Print ngrok URL
-      run: cat ngrok_url.txt
+      - name: Print ngrok URL
+        run: cat ngrok_url.txt
