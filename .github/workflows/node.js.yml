@@ -41,8 +41,7 @@ jobs:
 
     - name: Download ngrok
       run: |
-        curl -s https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip -o ngrok.zip
-        unzip ngrok.zip
+        curl -s https://ngrok.com/download | bash
         sudo mv ngrok /usr/local/bin
 
     - name: Authenticate ngrok (securely using secrets)
