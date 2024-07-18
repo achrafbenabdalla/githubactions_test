@@ -37,7 +37,7 @@ jobs:
 
       - name: Set up Docker
         run: |
-          docker run -d -p 9000:9000 your-dockerhub-username/sonarqube:latest
+          docker run -d -p 9000:9000 sonarqube:latest
           sleep 30 # Wait for SonarQube to start
 
       - name: Download and set up ngrok
