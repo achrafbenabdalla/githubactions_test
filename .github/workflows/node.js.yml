@@ -10,22 +10,40 @@ on:
 
 jobs:
   test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+  sonar:
     runs-on: windows-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install SonarQube
+      - name: Set up Docker
         run: |
-          # Example: Download and install SonarQube on Windows
-          Invoke-WebRequest -Uri 'https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-9.2.3.37887.zip' -OutFile 'sonarqube.zip'
-          Expand-Archive -Path 'sonarqube.zip' -DestinationPath 'C:\sonarqube'
-          Set-Location -Path 'C:\sonarqube\sonarqube-9.2.3.37887\bin\windows-x86-64'
-          Start-Process 'StartSonar.bat' -NoNewWindow
+          docker run -d -p 9000:9000 sonarqube:latest
+          sleep 30 # Wait for SonarQube to start
 
       - name: Install ngrok
-        run: choco install ngrok
+        run: |
+          curl -s https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip -o ngrok.zip
+          unzip ngrok.zip
+          sudo mv ngrok /usr/local/bin/ngrok
 
       - name: Authenticate ngrok (using secrets)
         run: ngrok authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
@@ -35,11 +53,11 @@ jobs:
           ngrok http 9000 --log=stdout > ngrok.log &
 
       - name: Wait for ngrok to start
-        run: Start-Sleep -Seconds 10
+        run: sleep 10
 
       - name: Get ngrok URL
         run: |
-          Invoke-RestMethod -Uri 'http://localhost:4040/api/tunnels' | Select-Object -ExpandProperty tunnels | Select-Object -First 1 -ExpandProperty public_url > ngrok_url.txt
+          curl -s http://localhost:4040/api/tunnels | jq -r .tunnels[0].public_url > ngrok_url.txt
 
       - name: Print ngrok URL
-        run: type ngrok_url.txt
+        run: cat ngrok_url.txt
