@@ -42,7 +42,7 @@ jobs:
       - name: Install ngrok via Docker
         run: |
           docker pull ngrok/ngrok
-          docker run -d --name ngrok-container ngrok/ngrok ngrok http 9000 --log=stdout
+          docker run --net=host -it -e NGROK_AUTHTOKEN=${{ secrets.NGROK_AUTH_TOKEN }} ngrok/ngrok:latest http 9000
           sleep 10 # Wait for ngrok to start
 
       - name: Check running containers
@@ -50,9 +50,6 @@ jobs:
 
       - name: Get ngrok container logs
         run: docker logs ngrok-container
-
-      - name: Authenticate ngrok (using secrets)
-        run: docker exec ngrok-container ngrok authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
 
       - name: Get ngrok URL
         run: |
