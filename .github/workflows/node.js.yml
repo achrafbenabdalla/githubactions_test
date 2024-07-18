@@ -28,7 +28,7 @@ jobs:
         run: npm test
 
   sonar:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
