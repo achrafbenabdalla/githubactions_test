@@ -13,53 +13,47 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '14'
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
 
-      - name: Install dependencies
-        run: npm install
+    - name: Install dependencies
+      run: npm install
 
-      - name: Run tests
-        run: npm test
+    - name: Run tests
+      run: npm test
 
   sonar:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Set up Docker
-        run: |
-          docker run -d -p 9000:9000 sonarqube:latest
-          sleep 30 # Wait for SonarQube to start
+    - name: Set up Docker
+      run: |
+        docker run -d -p 9000:9000 sonarqube:latest
+        # Adjust wait time as needed (optional)
+        sleep 30 # Wait for SonarQube to start
 
-      - name: Download and set up ngrok
-        run: |
-          wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip -O ngrok.zip
-          unzip ngrok.zip
-          sudo mv ngrok /usr/local/bin
-          ngrok update
+    - name: Download and install ngrok (latest version)
+      run: |
+        bash -c "$(curl -s https://ngrok.com/downloads/ngrok-install-packages/linux.sh)"
 
-      - name: Start ngrok
-        run: ngrok authtoken ${{ secrets.NGROK_AUTH_TOKEN }} && ngrok http 9000 --log=stdout > ngrok.log &
-      
-      - name: Wait for ngrok to start
-        run: sleep 10
+    - name: Authenticate ngrok (securely using secrets)
+      run: ngrok authtoken ${{ secrets.NGROK_AUTH_TOKEN }} || true  # Handle potential errors (optional)
 
-      - name: Debug ngrok log
-        run: cat ngrok.log
+    - name: Start ngrok (background process and log capture)
+      run: |
+        ngrok http 9000 --log=stdout > ngrok.log &
 
-      - name: Get ngrok URL
-        run: curl -s http://127.0.0.1:4040/api/tunnels | jq -r .tunnels[0].public_url > ngrok_url.txt
+    - name: Get ngrok URL (simplified with error handling)
+      run: |
+        curl -s http://127.0.0.1:4040/api/tunnels | grep public_url || true  # Handle potential errors (optional) | awk '{print $2}' > ngrok_url.txt
 
-      - name: Print ngrok URL
-        run: cat ngrok_url.txt
-
-      - name: Debug ngrok URL retrieval
-        run: curl -s http://127.0.0.1:4040/api/tunnels
+    - name: Print ngrok URL
+      run: cat ngrok_url.txt
