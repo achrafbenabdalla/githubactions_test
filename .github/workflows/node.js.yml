@@ -28,7 +28,6 @@ jobs:
         run: npm test
 
   sonar:
-    needs: test
     runs-on: ubuntu-latest
 
     steps:
@@ -37,7 +36,7 @@ jobs:
 
       - name: Set up Docker
         run: |
-          docker run -d -p 9000:9000 sonarqube:latest
+          docker run -d -p 9000:9000 your-dockerhub-username/sonarqube:latest
           sleep 30 # Wait for SonarQube to start
 
       - name: Download and set up ngrok
@@ -52,8 +51,14 @@ jobs:
       - name: Wait for ngrok to start
         run: sleep 10
 
+      - name: Debug ngrok log
+        run: cat ngrok.log
+
       - name: Get ngrok URL
         run: curl -s http://127.0.0.1:4040/api/tunnels | jq -r .tunnels[0].public_url > ngrok_url.txt
 
       - name: Print ngrok URL
         run: cat ngrok_url.txt
+
+      - name: Debug ngrok URL retrieval
+        run: curl -s http://127.0.0.1:4040/api/tunnels
