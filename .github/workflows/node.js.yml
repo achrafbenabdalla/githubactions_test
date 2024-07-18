@@ -37,7 +37,10 @@ jobs:
       - name: Set up Docker
         run: |
           docker run -d -p 9000:9000 --name sonarqube-container sonarqube:latest
-          sleep 30 # Wait for SonarQube to start
+          sleep 60 # Wait for SonarQube to start
+
+      - name: Check SonarQube logs
+        run: docker logs sonarqube-container
 
       - name: Install ngrok via Docker
         run: |
@@ -63,3 +66,9 @@ jobs:
           NGROK_URL=$(cat ngrok_url.txt)
           echo "Verifying ngrok tunnel at $NGROK_URL"
           curl -s -I $NGROK_URL | head -n 1
+
+      - name: Check SonarQube status via ngrok
+        run: |
+          NGROK_URL=$(cat ngrok_url.txt)
+          echo "Checking SonarQube status at $NGROK_URL"
+          curl -s -I "$NGROK_URL/api/system/status" | head -n 1
