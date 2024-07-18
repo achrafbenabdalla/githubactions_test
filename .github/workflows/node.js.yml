@@ -48,6 +48,9 @@ jobs:
       - name: Check running containers
         run: docker ps
 
+      - name: Get ngrok container logs
+        run: docker logs ngrok-container
+
       - name: Authenticate ngrok (using secrets)
         run: docker exec ngrok-container ngrok authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
 
