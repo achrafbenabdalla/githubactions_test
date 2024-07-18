@@ -53,22 +53,12 @@ jobs:
         ngrok http 9000 --log=stdout > ngrok.log &
         sleep 10
 
+    - name: Wait for ngrok to start
+      run: sleep 10
+
     - name: Get ngrok URL (simplified with error handling)
       run: |
-        curl -s http://127.0.0.1:4040/api/tunnels | jq -r .tunnels[0].public_url > ngrok_url.txt
+        curl -s http://localhost:4040/api/tunnels | jq -r .tunnels[0].public_url > ngrok_url.txt
 
     - name: Print ngrok URL
       run: cat ngrok_url.txt
-
-
-
-
-
-
-
-
-
-
-    # Optional: Debug ngrok log (comment out if not needed)
-    # - name: Debug ngrok log
-    #   run: cat ngrok.log
