@@ -36,19 +36,20 @@ jobs:
 
       - name: Set up Docker
         run: |
-          docker run -d -p 9000:9000 sonarqube:latest
+          docker run -d -p 9000:9000 --name sonarqube-container sonarqube:latest
           sleep 30 # Wait for SonarQube to start
 
       - name: Install ngrok via Docker
         run: |
           docker pull ngrok/ngrok
-          docker run --name ngrok-container -d ngrok/ngrok ngrok http 9000 --log=stdout
+          docker run -d --name ngrok-container ngrok/ngrok ngrok http 9000 --log=stdout
+          sleep 10 # Wait for ngrok to start
+
+      - name: Check running containers
+        run: docker ps
 
       - name: Authenticate ngrok (using secrets)
         run: docker exec ngrok-container ngrok authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
-
-      - name: Wait for ngrok to start
-        run: sleep 10
 
       - name: Get ngrok URL
         run: |
