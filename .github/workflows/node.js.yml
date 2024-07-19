@@ -79,17 +79,4 @@ jobs:
           echo "Testing access to SonarQube via $NGROK_URL"
           curl -s "$NGROK_URL/api/system/status" | jq .
 
-      - name: Stop and remove ngrok tunnel
-        run: |
-          docker stop ngrok-container
-          docker rm ngrok-container
-
-      - name: Start ngrok tunnel
-        run: |
-          docker run --net=host -d --name ngrok-container -e NGROK_AUTHTOKEN=${{ secrets.NGROK_AUTH_TOKEN }} ngrok/ngrok:latest http 9000
-          sleep 10 # Wait for ngrok to start
-          curl -s http://127.0.0.1:4040/api/tunnels | jq -r .tunnels[0].public_url > ngrok_url.txt
-          cat ngrok_url.txt
-
-      - name: Get ngrok URL after restart
-        run: cat ngrok_url.txt
+          
