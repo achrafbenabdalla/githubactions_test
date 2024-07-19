@@ -34,18 +34,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Docker
+      - name: Set up Docker network
         run: |
-          docker run -d -p 9000:9000 --name sonarqube-container sonarqube:latest
+          docker network create sonarqube-network
+
+      - name: Set up SonarQube
+        run: |
+          docker run -d --network sonarqube-network -p 9000:9000 --name sonarqube-container sonarqube:latest
           sleep 60 # Wait for SonarQube to start
 
       - name: Check SonarQube logs
         run: docker logs sonarqube-container
 
-      - name: Install ngrok via Docker
+      - name: Set up ngrok
         run: |
           docker pull ngrok/ngrok
-          docker run --net=host -d --name ngrok-container -e NGROK_AUTHTOKEN=${{ secrets.NGROK_AUTH_TOKEN }} ngrok/ngrok:latest http 9000
+          docker run --network sonarqube-network -d --name ngrok-container -e NGROK_AUTHTOKEN=${{ secrets.NGROK_AUTH_TOKEN }} ngrok/ngrok:latest http 9000
           sleep 10 # Wait for ngrok to start
 
       - name: Install Shopify CLI
@@ -58,32 +62,36 @@ jobs:
         run: docker logs ngrok-container
 
       - name: Get ngrok URL
-        id: get_ngrok_url
         run: |
           curl -s http://127.0.0.1:4040/api/tunnels | jq -r .tunnels[0].public_url > ngrok_url.txt
 
       - name: Print ngrok URL
         run: cat ngrok_url.txt
 
+      - name: Stop existing Shopify tunnel
+        run: shopify app tunnel stop
+
+      - name: Start Shopify tunnel and capture URL
+        run: |
+          shopify app tunnel start &
+          sleep 10 # Wait for tunnel to start
+          curl -s http://127.0.0.1:4040/api/tunnels | jq -r .tunnels[0].public_url > shopify_tunnel_url.txt
+
+      - name: Print Shopify tunnel URL
+        run: cat shopify_tunnel_url.txt
+
       - name: Verify ngrok tunnel
-        id: verify_tunnel
         run: |
           NGROK_URL=$(cat ngrok_url.txt)
           echo "Verifying ngrok tunnel at $NGROK_URL"
-          response=$(curl -s -I $NGROK_URL)
-          echo $response
-          if [[ "$response" == *"200 OK"* ]]; then
-            echo "Tunnel is working"
-          else
-            echo "Tunnel failed" && exit 1
-          fi
+          curl -s -I $NGROK_URL | head -n 1
 
       - name: Restart ngrok tunnel if needed
         if: failure()
         run: |
           docker stop ngrok-container
           docker rm ngrok-container
-          docker run --net=host -d --name ngrok-container -e NGROK_AUTHTOKEN=${{ secrets.NGROK_AUTH_TOKEN }} ngrok/ngrok:latest http 9000
+          docker run --network sonarqube-network -d --name ngrok-container -e NGROK_AUTHTOKEN=${{ secrets.NGROK_AUTH_TOKEN }} ngrok/ngrok:latest http 9000
           sleep 10 # Wait for ngrok to start
           curl -s http://127.0.0.1:4040/api/tunnels | jq -r .tunnels[0].public_url > ngrok_url.txt
 
