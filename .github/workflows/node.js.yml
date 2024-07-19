@@ -79,4 +79,15 @@ jobs:
           echo "Testing access to SonarQube via $NGROK_URL"
           curl -s "$NGROK_URL/api/system/status" | jq .
 
-          
+      - name: Stop Shopify App Tunnel
+        run: shopify app tunnel stop
+
+      - name: Start Shopify App Tunnel
+        run: |
+          shopify app tunnel start > shopify_tunnel_output.txt
+          cat shopify_tunnel_output.txt
+
+      - name: Get Shopify Tunnel URL
+        run: |
+          SHOPIFY_TUNNEL_URL=$(grep -o 'https://[a-zA-Z0-9.-]*\.ngrok\.io' shopify_tunnel_output.txt)
+          echo "Shopify tunnel URL: $SHOPIFY_TUNNEL_URL"
