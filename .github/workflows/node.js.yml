@@ -34,26 +34,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Docker network
+      - name: Set up Docker
         run: |
-          docker network create sonarqube-network
-
-      - name: Set up SonarQube
-        run: |
-          docker run -d --network sonarqube-network -p 9000:9000 --name sonarqube-container sonarqube:latest
+          docker run -d -p 9000:9000 --name sonarqube-container sonarqube:latest
           sleep 60 # Wait for SonarQube to start
 
       - name: Check SonarQube logs
         run: docker logs sonarqube-container
 
-      - name: Set up ngrok
+      - name: Install ngrok via Docker
         run: |
           docker pull ngrok/ngrok
-          docker run --network sonarqube-network -d --name ngrok-container -e NGROK_AUTHTOKEN=${{ secrets.NGROK_AUTH_TOKEN }} ngrok/ngrok:latest http 9000
+          docker run --net=host -d --name ngrok-container -e NGROK_AUTHTOKEN=${{ secrets.NGROK_AUTH_TOKEN }} ngrok/ngrok:latest http 9000
           sleep 10 # Wait for ngrok to start
-
-      - name: Install Shopify CLI
-        run: npm install -g @shopify/cli@latest
+      
 
       - name: Check running containers
         run: docker ps
@@ -67,15 +61,15 @@ jobs:
 
       - name: Print ngrok URL
         run: cat ngrok_url.txt
-     
+
+      - name: Verify ngrok tunnel
+        run: |
+          NGROK_URL=$(cat ngrok_url.txt)
+          echo "Verifying ngrok tunnel at $NGROK_URL"
+          curl -s -I $NGROK_URL | head -n 1
+
       - name: Check SonarQube status via ngrok
         run: |
           NGROK_URL=$(cat ngrok_url.txt)
           echo "Checking SonarQube status at $NGROK_URL"
           curl -s -I "$NGROK_URL/api/system/status" | head -n 1
-
-      - name: Test access to SonarQube via ngrok
-        run: |
-          NGROK_URL=$(cat ngrok_url.txt)
-          echo "Testing access to SonarQube via $NGROK_URL"
-          curl -s "$NGROK_URL/api/system/status" | jq .
