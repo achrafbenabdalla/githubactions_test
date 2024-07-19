@@ -67,38 +67,7 @@ jobs:
 
       - name: Print ngrok URL
         run: cat ngrok_url.txt
-
-      - name: Stop existing Shopify tunnel
-        run: shopify app tunnel stop
-
-      - name: Start Shopify tunnel and capture URL
-        run: |
-          shopify app tunnel start &
-          sleep 10 # Wait for tunnel to start
-          curl -s http://127.0.0.1:4040/api/tunnels | jq -r .tunnels[0].public_url > shopify_tunnel_url.txt
-
-      - name: Print Shopify tunnel URL
-        run: cat shopify_tunnel_url.txt
-
-      - name: Verify ngrok tunnel
-        run: |
-          NGROK_URL=$(cat ngrok_url.txt)
-          echo "Verifying ngrok tunnel at $NGROK_URL"
-          curl -s -I $NGROK_URL | head -n 1
-
-      - name: Restart ngrok tunnel if needed
-        if: failure()
-        run: |
-          docker stop ngrok-container
-          docker rm ngrok-container
-          docker run --network sonarqube-network -d --name ngrok-container -e NGROK_AUTHTOKEN=${{ secrets.NGROK_AUTH_TOKEN }} ngrok/ngrok:latest http 9000
-          sleep 10 # Wait for ngrok to start
-          curl -s http://127.0.0.1:4040/api/tunnels | jq -r .tunnels[0].public_url > ngrok_url.txt
-
-      - name: Print new ngrok URL
-        if: failure()
-        run: cat ngrok_url.txt
-
+     
       - name: Check SonarQube status via ngrok
         run: |
           NGROK_URL=$(cat ngrok_url.txt)
