@@ -53,7 +53,7 @@ jobs:
           docker pull ngrok/ngrok
 
           # Run ngrok container
-          docker run --net=host -it -e NGROK_AUTHTOKEN=${{ secrets.NGROK_AUTH_TOKEN }} ngrok/ngrok:latest http 9000
+          docker run --net=host -d --name ngrok-container -e NGROK_AUTHTOKEN=${{ secrets.NGROK_AUTH_TOKEN }} ngrok/ngrok:latest http 9000
           sleep 10 # Wait for ngrok to start
 
       - name: Check running containers
@@ -74,9 +74,6 @@ jobs:
           NGROK_URL=$(cat ngrok_url.txt)
           echo "Verifying ngrok tunnel at $NGROK_URL"
           curl -s -I $NGROK_URL | head -n 1
-
-
-        
 
       - name: Check SonarQube status via ngrok
         run: |
