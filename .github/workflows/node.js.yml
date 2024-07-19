@@ -75,6 +75,9 @@ jobs:
           echo "Verifying ngrok tunnel at $NGROK_URL"
           curl -s -I $NGROK_URL | head -n 1
 
+
+        
+
       - name: Check SonarQube status via ngrok
         run: |
           NGROK_URL=$(cat ngrok_url.txt)
