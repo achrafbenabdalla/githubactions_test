@@ -79,8 +79,10 @@ jobs:
           echo "Testing access to SonarQube via $NGROK_URL"
           curl -s "$NGROK_URL/api/system/status" | jq .
 
-      - name: Stop ngrok tunnel
-        run: docker stop ngrok-container
+      - name: Stop and remove ngrok tunnel
+        run: |
+          docker stop ngrok-container
+          docker rm ngrok-container
 
       - name: Start ngrok tunnel
         run: |
