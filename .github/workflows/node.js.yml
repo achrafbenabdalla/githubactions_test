@@ -26,66 +26,7 @@ jobs:
 
       - name: Run tests
         run: npm test
-
-  sonar:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Set up Docker
-        run: |
-          # Remove existing containers if they exist
-          docker rm -f sonarqube-container || true
-          docker rm -f ngrok-container || true
-
-          # Run SonarQube container
-          docker run -d -p 9000:9000 --name sonarqube-container sonarqube:latest
-          sleep 60 # Wait for SonarQube to start
-
-      - name: Check SonarQube logs
-        run: docker logs sonarqube-container
-
-      - name: Install ngrok via Docker
-        run: |
-          # Pull ngrok image
-          docker pull ngrok/ngrok
-
-          # Run ngrok container
-          docker run --net=host -d --name ngrok-container -e NGROK_AUTHTOKEN=${{ secrets.NGROK_AUTH_TOKEN }} ngrok/ngrok:latest http 9000
-          sleep 10 # Wait for ngrok to start
-
-      - name: List Docker containers
-        run: docker ps
-
-      - name: List all Docker containers (including stopped ones)
-        run: docker ps -a
-
-      - name: Log ngrok container
-        run: |
-          echo "Fetching ngrok logs..."
-          docker logs ngrok-container || true
-
-      - name: Get ngrok URL
-        run: |
-          curl -s http://127.0.0.1:4040/api/tunnels | jq -r .tunnels[0].public_url > ngrok_url.txt
-
-      - name: Print ngrok URL
-        run: cat ngrok_url.txt
-
-      - name: Verify ngrok tunnel
-        run: |
-          NGROK_URL=$(cat ngrok_url.txt)
-          echo "Verifying ngrok tunnel at $NGROK_URL"
-          curl -s -I $NGROK_URL | head -n 1
-
-      - name: Check SonarQube status via ngrok
-        run: |
-          NGROK_URL=$(cat ngrok_url.txt)
-          echo "Checking SonarQube status at $NGROK_URL"
-          curl -s -I "$NGROK_URL/api/system/status" | head -n 1
-
+        
   sonarcloud:
     runs-on: ubuntu-latest
 
