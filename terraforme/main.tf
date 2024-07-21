@@ -88,6 +88,7 @@ resource "azurerm_network_security_group" "nsg" {
   }
 }
 
+
 # Public IP Address
 resource "azurerm_public_ip" "public_ip" {
   name                = "myPublicIP"
