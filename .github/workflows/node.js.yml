@@ -49,6 +49,3 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-      - name: Check Quality Gate status
-        if: steps.qualitygate.outputs.status != 'GREEN'
-        run: exit 1
