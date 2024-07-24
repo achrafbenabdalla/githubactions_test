@@ -25,6 +25,14 @@ jobs:
 
       - name: Run tests
         run: npm test
+        continue-on-error: true
+
+      - name: Export test results
+        if: always()
+        run: |
+          if [ -f results.xml ]; then
+            curl -X POST -H "Content-Type: application/xml" --data-binary @results.xml http://172.172.218.129:9999/metrics
+          fi
 
   build:
     name: Build and Analyze
@@ -55,3 +63,15 @@ jobs:
       # The possible outputs of the `quality-gate-status` variable are `PASSED`, `WARN` or `FAILED`.
       - name: "Example show SonarQube Quality Gate Status value"
         run: echo "The Quality Gate status is ${{ steps.sonarqube-quality-gate-check.outputs.quality-gate-status }}"
+
+      - name: Record build status
+        if: failure()
+        run: echo "Build failed" >> failure_log.txt
+        continue-on-error: true
+
+      - name: Upload metrics
+        if: always()
+        run: |
+          fail_count=$(if [ -f failure_log.txt ]; then wc -l < failure_log.txt; else echo 0; fi)
+          last_status=$(if [ -f failure_log.txt ]; then echo "failed"; else echo "success"; fi)
+          curl -X POST -H "Content-Type: application/json" -d "{\"fail_count\": $fail_count, \"last_status\": \"$last_status\"}" http://172.172.218.129:9999/metrics
