@@ -53,20 +53,24 @@ jobs:
       - name: Show SonarQube Quality Gate Status
         run: echo "The Quality Gate status is ${{ steps.sonarqube-quality-gate-check.outputs.quality-gate-status }}"
 
+  notify:
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    steps:
       - name: Send Slack Notification on Failure
-        if: steps.sonarqube-quality-gate-check.outputs.quality-gate-status == 'FAILED'
+        if: failure()
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           curl -X POST -H 'Content-type: application/json' \
-          --data '{"text":"The SonarQube Quality Gate status is FAILED for the latest commit by ${GITHUB_ACTOR} in repository ${GITHUB_REPOSITORY}."}' \
+          --data '{"text":"The CI/CD pipeline has failed for the latest commit by ${GITHUB_ACTOR} in repository ${GITHUB_REPOSITORY}."}' \
           $SLACK_WEBHOOK_URL
 
       - name: Send Slack Notification on Success
-        if: steps.sonarqube-quality-gate-check.outputs.quality-gate-status == 'PASSED'
+        if: success()
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           curl -X POST -H 'Content-type: application/json' \
-          --data '{"text":"The SonarQube Quality Gate status is PASSED for the latest commit by ${GITHUB_ACTOR} in repository ${GITHUB_REPOSITORY}."}' \
+          --data '{"text":"The CI/CD pipeline has passed for the latest commit by ${GITHUB_ACTOR} in repository ${GITHUB_REPOSITORY}."}' \
           $SLACK_WEBHOOK_URL
